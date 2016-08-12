@@ -29,10 +29,10 @@ import java.io.File
 class HomeController @Inject()(wsClient: WSClient) extends Controller {
 
   val redirectURI = "http://localhost:9000/callback"
- // val CLIENT_ID = "196880177283-1377e3ib4kd142mfvd1e5q0vqgfjhru0.apps.googleusercontent.com"
-  val CLIENT_ID ="690129711161-m0urgovlc6spck9emrjgimvfde3t6l6i.apps.googleusercontent.com"
-  //val CLIENT_SECRET = "7yipeBkkWRJhaI0vS9NJZOtl"
-  val CLIENT_SECRET ="9J7OChU0ZSGqPCqG-kOADDVV"
+ // val CLIENT_ID = "plzzz ur  id"
+  val CLIENT_ID ="plzzz ur  id"
+  //val CLIENT_SECRET = "plzz add ur secret"
+  val CLIENT_SECRET ="plzz add ur secret"
   val httpTransport = new NetHttpTransport
   val jsonFactory = new JacksonFactory
 
