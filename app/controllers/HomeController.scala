@@ -1,37 +1,47 @@
 package controllers
 
-import java.io.{ByteArrayOutputStream, InputStreamReader, BufferedReader, DataOutputStream}
+import java.io._
 import java.net.URL
 import java.util
 import javax.inject._
+import java.io.PrintWriter
+
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
 import com.google.api.services.drive.Drive
-import com.google.api.services.drive.model.File
+//import com.google.api.services.drive.model.File
 import sun.net.www.protocol.https.HttpsURLConnectionImpl
 import play.api.mvc._
-import com.google.api.client.googleapis.auth.oauth2.{GoogleCredential, GoogleBrowserClientRequestUrl}
+import com.google.api.client.googleapis.auth.oauth2.{GoogleBrowserClientRequestUrl, GoogleCredential}
+import com.google.api.client.json.Json
+import play.api.libs.ws.{WSAPI, WSClient}
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.JavaConversions._
+import scala.io.Source
+import java.io.File
 
 /**
- * This controller creates an `Action` to handle HTTP requests to the
- * application's home page.
- */
+  * This controller creates an `Action` to handle HTTP requests to the
+  * application's home page.
+  */
 @Singleton
-class HomeController @Inject() extends Controller {
+class HomeController @Inject()(wsClient: WSClient) extends Controller {
 
   val redirectURI = "http://localhost:9000/callback"
-  val CLIENT_ID = "196880177283-1377e3ib4kd142mfvd1e5q0vqgfjhru0.apps.googleusercontent.com"
-  val CLIENT_SECRET = "7yipeBkkWRJhaI0vS9NJZOtl"
+ // val CLIENT_ID = "196880177283-1377e3ib4kd142mfvd1e5q0vqgfjhru0.apps.googleusercontent.com"
+  val CLIENT_ID ="690129711161-m0urgovlc6spck9emrjgimvfde3t6l6i.apps.googleusercontent.com"
+  //val CLIENT_SECRET = "7yipeBkkWRJhaI0vS9NJZOtl"
+  val CLIENT_SECRET ="9J7OChU0ZSGqPCqG-kOADDVV"
   val httpTransport = new NetHttpTransport
   val jsonFactory = new JacksonFactory
 
   /**
-   * Create an Action to render an HTML page with a welcome message.
-   * The configuration in the `routes` file means that this method
-   * will be called when the application receives a `GET` request with
-   * a path of `/`.
-   */
+    * Create an Action to render an HTML page with a welcome message.
+    * The configuration in the `routes` file means that this method
+    * will be called when the application receives a `GET` request with
+    * a path of `/`.
+    */
   def index = Action {
     Ok(views.html.index("Your new application is ready."))
   }
@@ -71,13 +81,17 @@ class HomeController @Inject() extends Controller {
     val in = new BufferedReader(new InputStreamReader(inputStream))
     val response = new StringBuffer
     while (in.readLine != null) {
+
       response.append(in.readLine)
     }
     val accessToken = response.toString.split(",").toList(0).split(":").toList(1)
-    val files = getAllDocumentsFromGoogleDocs(accessToken)
-    val fileId = "0B43IZoz6cHYdVXc0YUtOZndGRG8"
-    println(s"Files:::${files}")
-    getFile(fileId, accessToken)
+    println(s"accessToken::::::::${accessToken}")
+   // val files = getAllDocumentsFromGoogleDocs(accessToken)
+   // println(s"Files:::${files}")
+//   val fileId = "0BwPjFIOmpJvQOVFpRVZaOWJtXzg"
+    val fileId="0BwPjFIOmpJvQTWVib3UyeWFyZHc"
+    fileDownload(fileId)
+    //download(fileId, accessToken)
     in.close
     Ok(response.toString)
   }
@@ -86,8 +100,17 @@ class HomeController @Inject() extends Controller {
     val driver = prepareGoogleDrive(accessToken)
     val outputStream = new ByteArrayOutputStream()
     driver.files().get(fileId).executeMediaAndDownloadTo(outputStream)
-
   }
+  /*def download(fileId:String, accessToken: String)={
+    println("####fieldId in downlaod#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#"+fileId)
+    val driver = prepareGoogleDrive(accessToken)
+    val outputStream = new ByteArrayOutputStream()
+
+    driver.files().get(fileId)
+      .executeMediaAndDownloadTo(outputStream)
+  }*/
+
+
 
   /**
     * Set Up Google App Credentials
@@ -108,9 +131,9 @@ class HomeController @Inject() extends Controller {
     * Get All Files From Google Drive
     */
 
-  def getAllDocumentsFromGoogleDocs(code: String): List[(String, String)] = {
+/*  def getAllDocumentsFromGoogleDocs(code: String): List[(String, String)] = {
     val service = prepareGoogleDrive(code)
-    var result: List[File] = Nil
+    var result: List[java.io.File] = Nil
     val request = service.files.list
     do {
       val files = request.execute
@@ -121,7 +144,40 @@ class HomeController @Inject() extends Controller {
     result map {
       case a => (a.getName, a.getId)
     }
-  }
+  }*/
+
+  /**
+  * Download File from url
+  * */
+
+  def fileDownload(fileId:String) = {
+
+    wsClient.url(s"https://www.googleapis.com/drive/v3/files/${fileId}?alt=media").
+      withHeaders("Authorization" -> "Bearer ya29.CjQ8A_qeYKRN3nBDv-ighBpsmlr9HGVqLc19zRgyOwl1fknBdR8W9XavBh_IU8jSvXKFv1gv").
+      get() map { response =>
+      response.status match {
+        case 200 =>
+          val pp = response.body
+          println("response ddata" + pp)
+
+          val writer = new PrintWriter(new java.io.File("/home/ved/vedproject/google-drive-scala/app/resourse/Write.csv"))
+
+          writer.write(pp)
+          writer.close()
+
+         // Source.fromFile("Write.txt").foreach { x => print(x) }
+
+          //println("file download data")
+        case _ => println("dubara check kar bhai ")
+
+
+
+                  }
+
+      }
+    }
+
+
 
   /*def authDropbox(String dropBoxAppKey, String dropBoxAppSecret)
   throws IOException, DbxException {
